@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Business Ledger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffeef2; /* Very light pink background */
+        }
+        /* Custom scrollbar for better mobile feel */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #ffeef2; }
+        ::-webkit-scrollbar-thumb { background: #fda4af; border-radius: 2px; } /* Pink scrollbar */
+        .ledger-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .ledger-table table { min-width: 900px; } /* Increased width for new column */
+
+        /* SVG styling for color accents */
+        .goddess-svg path {
+            fill: currentColor;
+        }
+
+        /* Utility for mobile optimization - ensures larger clickable areas */
+        .mobile-touch-target {
+            min-height: 44px; /* Recommended minimum touch size */
+            display: inline-flex;
+            align-items: center;
+        }
+        /* Ensure input fields respect touch target size */
+        .mobile-touch-target-input {
+            min-height: 44px;
+        }
+
+        /* Ensure images load correctly */
+        .spiritual-image-container {
+            width: 56px; /* 14 h/w */
+            height: 56px;
+            padding: 4px;
+            border-radius: 9999px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        #spiritual-image-jgd, .goddess-svg {
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Styling for the Party List items */
+        .party-list-item {
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .party-list-item:hover {
+            background-color: #fce8ed; /* Light pink on hover */
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 p-3 rounded-lg shadow-lg text-sm transition-opacity duration-300 opacity-0 pointer-events-none"></div>
+
+    <div id="app" class="max-w-4xl mx-auto p-4 md:p-6">
+        
+        <!-- Jai Guru Dev Banner -->
+        <div class="bg-red-600 text-white text-center py-2 rounded-lg mb-6 shadow-md tracking-widest text-xl font-bold">
+            JAI GURU DEV
+        </div>
+
+        <header class="mb-6 pb-4 border-b border-pink-300 flex justify-between items-center">
+            <div class="flex items-center">
+                
+                <!-- Container for BOTH Images -->
+                <div class="flex space-x-2 mr-4">
+                    <!-- Image 1: Jai Guru Dev Maharaj Ji -->
+                    <div class="spiritual-image-container border-2 border-green-500 bg-green-100">
+                        <!-- !!! IMPORTANT: YOU MUST REPLACE THIS URL AFTER HOSTING YOUR IMAGE !!! -->
+                        <img id="spiritual-image-jgd" 
+                            src="https://placehold.co/100x100/10b981/ffffff?text=JGD+IMAGE" 
+                            alt="Param Sant Baba Umakant Ji Maharaj" 
+                            class="w-full h-full object-cover">
+                    </div>
+
+                    <!-- Image 2: Custom Lakshmi Ganesh SVG Icon -->
+                    <div class="spiritual-image-container border-2 border-pink-400 text-pink-700 bg-pink-100">
+                        <svg class="goddess-svg w-full h-full p-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 16H8V14h3v4zm5 0h-3V14h3v4zm3-7c0 2.21-1.79 4-4 4s-4-1.79-4-4 1.79-4 4-4 4 1.79 4 4zM12 4c-3.31 0-6 2.69-6 6h12c0-3.31-2.69-6-6-6z" fill="currentColor"/>
+                            <circle cx="12" cy="11" r="2" fill="#4ade80"/> 
+                            <path d="M12 7l1 2h-2l1-2z" fill="#f87171"/> 
+                        </svg>
+                    </div>
+                </div>
+
+                <h1 class="text-3xl font-bold text-red-700">Digital Ledger</h1>
+            </div>
+            <div class="text-sm text-gray-600 flex flex-col items-end">
+                <span id="user-id-display" class="bg-pink-100 p-1 rounded">Loading User...</span>
+            </div>
+        </header>
+        
+        <!-- Loading Spinner before Dashboard shows -->
+        <div id="initial-loading" class="flex flex-col items-center justify-center py-20 text-pink-600">
+            <svg class="animate-spin h-8 w-8 text-pink-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p>Loading Ledger and connecting to cloud data...</p>
+        </div>
+
+        <!-- Main Dashboard View -->
+        <div id="dashboard-view" class="hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-pink-700">Summary</h2>
+
+            <!-- Warning for missing keys -->
+            <div id="config-warning" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-md" role="alert">
+                <p class="font-bold">Database Warning</p>
+                <p>Firebase configuration is missing or invalid. **Data will NOT sync across devices or be saved permanently.** Please deploy this file to a web host and ensure the configuration keys are pasted correctly.</p>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-green-500">
+                    <p class="text-sm font-medium text-gray-600">Total Receivable (Money to get)</p>
+                    <p id="total-receivable" class="text-3xl font-bold text-green-600 mt-1">₹ 0.00</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-red-500">
+                    <p class="text-sm font-medium text-gray-600">Total Payable (Money to give)</p>
+                    <p id="total-payable" class="text-3xl font-bold text-red-600 mt-1">₹ 0.00</p>
+                </div>
+            </div>
+
+            <!-- Party List -->
+            <h2 class="text-xl font-semibold mb-3 text-pink-700 flex justify-between items-center">
+                Parties
+                <button onclick="toggleView('add-transaction-view')" class="bg-pink-600 hover:bg-pink-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition duration-150 mobile-touch-target">
+                    + Add Transaction
+                </button>
+            </h2>
+
+            <div id="parties-list" class="bg-white rounded-xl shadow-md divide-y divide-pink-100">
+                <div class="p-4 text-center text-gray-500">No parties found. Add a transaction to start.</div>
+            </div>
+        </div>
+
+        <!-- Ledger Detail View -->
+        <div id="ledger-view" class="hidden">
+            <button onclick="toggleView('dashboard-view')" class="text-pink-600 hover:text-pink-800 mb-4 flex items-center mobile-touch-target">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 0 01-1.414 1.414l-4-4a1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                Back to Dashboard
+            </button>
+            <div class="flex justify-between items-start mb-4">
+                <h2 id="ledger-title" class="text-2xl font-bold text-pink-700">Ledger for [Party Name]</h2>
+                <button onclick="shareClientLink()" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-3 rounded-lg shadow-md transition duration-150 text-sm mobile-touch-target">
+                    Share Read-Only Link
+                </button>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-pink-200 flex-1">
+                    <p class="text-sm font-medium text-gray-600">Current Balance</p>
+                    <p id="ledger-balance" class="text-2xl font-bold text-gray-900 mt-1">₹ 0.00</p>
+                </div>
+                <div id="ledger-type-info" class="bg-white p-3 rounded-xl shadow-sm border border-pink-200 flex-1">
+                    <!-- Dynamic text will be inserted here -->
+                </div>
+            </div>
+
+            <div class="ledger-table bg-white rounded-xl shadow-md">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-pink-700 uppercase bg-pink-50">
+                        <tr>
+                            <th scope="col" class="py-3 px-3">S.N.</th>
+                            <th scope="col" class="py-3 px-3">Date</th>
+                            <th scope="col" class="py-3 px-3">Type</th>
+                            <th scope="col" class="py-3 px-3">Quality</th>
+                            <th scope="col" class="py-3 px-3">Net Wt (Kg)</th>
+                            <th scope="col" class="py-3 px-3">Rate (₹/Kg)</th>
+                            <th scope="col" class="py-3 px-3">Mode</th>
+                            <th scope="col" class="py-3 px-3 text-right">Amount (₹)</th>
+                            <th scope="col" class="py-3 px-3 text-right">Paid (₹)</th>
+                            <th scope="col" class="py-3 px-3 text-right">Balance (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-body">
+                        <!-- Ledger entries go here -->
+                        <tr class="bg-white border-b hover:bg-pink-50"><td colspan="10" class="p-4 text-center">Select a party to view the ledger.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Transaction Form View -->
+        <div id="add-transaction-view" class="hidden bg-white p-6 rounded-xl shadow-lg">
+            <button onclick="toggleView('dashboard-view')" class="text-pink-600 hover:text-pink-800 mb-4 flex items-center mobile-touch-target">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 0 01-1.414 1.414l-4-4a1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                Back to Dashboard
+            </button>
+            <h2 class="text-2xl font-bold mb-6 text-pink-700">Add New Transaction</h2>
+
+            <form id="transaction-form" onsubmit="event.preventDefault(); addTransaction();">
+
+                <!-- Type and Party Name (Dropdown is already working) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="relative">
+                        <label for="type" class="block text-sm font-medium text-gray-700">Transaction Type</label>
+                        <select id="type" name="type" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-pink-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm rounded-md shadow-sm mobile-touch-target">
+                            <option value="Sale">Sale (You sell, they owe you)</option>
+                            <option value="Purchase">Purchase (You buy, you owe them)</option>
+                        </select>
+                    </div>
+
+                    <div class="relative">
+                        <label for="partyName" class="block text-sm font-medium text-gray-700">Party Name (Vendor/Client)</label>
+                        <input type="text" id="partyName" name="partyName" required placeholder="e.g., Supplier X, Customer Y" list="party-suggestions" class="mt-1 block w-full border border-pink-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 mobile-touch-target-input">
+                        <datalist id="party-suggestions"></datalist>
+                    </div>
+                </div>
+
+                <!-- Weights and Quality -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="date" id="date" name="date" required value="" class="mt-1 block w-full border border-pink-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 mobile-touch-target-input">
+                    </div>
+                    <div>
+                        <label for="grossWeight" class="block text-sm font-medium text-gray-700">Gross Wt (Kg)</label>
+                        <input type="number" id="grossWeight" name="grossWeight" step="0.01" min="0" required class="mt-1 block w-full border border-pink-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 mobile-touch-target-input">
+                    </div>
+                    <div>
+                        <label for="netWeight" class="block text-sm font-medium text-gray-700">Net Wt (Kg)</label>
+                        <input type="number" id="netWeight" name="netWeight" step="0.01" min="0" required oninput="calculateAmount()" class="mt-1 block w-full border border-pink-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 mobile-touch-target-input">
+                    </div>
+                    <div>
+                        <label for="materialQuality" class="block text-sm font-medium text-gray-700">Quality (Dropdown)</label>
+                        <input type="text" id="materialQuality" name="materialQuality" placeholder="e.g., A-Grade, Standard" list="quality-suggestions" class="mt-1 block w-full border border-pink-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 mobile-touch-target-input">
+                        <datalist id="quality-suggestions"></datalist>
+                    </div>
+                </div>
+
+                <!-- Financials and Payment Mode -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                    <div class="sm:col-span-2">
+                        <label for="modeOfPayment" class="block text-sm font-medium text-gray-700">Mode of Payment (Optional)</label>
+                        <input type="text" id="modeOfPayment" name="modeOfPayment" placeholder="e.g., Cash, Bank Transfer, Cheque" class="mt-1 block w-full border border-pink-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 mobile-touch-target-input">
+                    </div>
+                    <div>
+                        <label for="rate" class="block text-sm font-medium text-gray-700">Rate (₹/Kg)</label>
+                        <input type="number" id="rate" name="rate" step="0.01" min="0" required oninput="calculateAmount()" class="mt-1 block w-full border border-pink-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 mobile-touch-target-input">
+                    </div>
+                    <div>
+                        <label for="amountPaid" class="block text-sm font-medium text-gray-700">Amount Paid (₹)</label>
+                        <input type="number" id="amountPaid" name="amountPaid" step="0.01" min="0" required oninput="calculateAmount()" class="mt-1 block w-full border border-pink-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 mobile-touch-target-input">
+                    </div>
+                </div>
+
+                <!-- Calculated Totals -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-pink-200">
+                    <div class="bg-pink-50 p-3 rounded-lg border border-pink-200">
+                        <label class="block text-sm font-medium text-gray-700">Total Amount (Net Wt * Rate)</label>
+                        <p id="calculated-amount" class="text-lg font-bold text-gray-900 mt-1">₹ 0.00</p>
+                        <input type="hidden" id="amount" name="amount">
+                    </div>
+                    <div>
+                        <button type="submit" id="submit-btn" class="w-full h-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 flex items-center justify-center disabled:opacity-50 mobile-touch-target">
+                            <svg id="loader" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            Add Transaction
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Read-Only Client View -->
+        <div id="client-view" class="hidden">
+             <button onclick="clearClientView()" class="text-pink-600 hover:text-pink-800 mb-4 flex items-center mobile-touch-target">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 0 01-1.414 1.414l-4-4a1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                Go Back (Exit Read-Only Mode)
+            </button>
+            <h2 id="client-view-title" class="text-2xl font-bold mb-4 text-pink-700">Client Ledger for [Party Name] (Read-Only)</h2>
+             <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-md" role="alert">
+                <p class="font-bold">Information Access</p>
+                <p>This is a read-only view of your transactions with the business. Data cannot be modified here.</p>
+            </div>
+            <!-- Ledger content copied from ledger-view goes here -->
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-pink-200 flex-1">
+                    <p class="text-sm font-medium text-gray-600">Your Current Net Balance</p>
+                    <p id="client-ledger-balance" class="text-2xl font-bold text-gray-900 mt-1">₹ 0.00</p>
+                </div>
+            </div>
+            
+            <div class="ledger-table bg-white rounded-xl shadow-md">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-pink-700 uppercase bg-pink-50">
+                        <tr>
+                            <th scope="col" class="py-3 px-3">S.N.</th>
+                            <th scope="col" class="py-3 px-3">Date</th>
+                            <th scope="col" class="py-3 px-3">Type</th>
+                            <th scope="col" class="py-3 px-3">Quality</th>
+                            <th scope="col" class="py-3 px-3">Net Wt (Kg)</th>
+                            <th scope="col" class="py-3 px-3">Rate (₹/Kg)</th>
+                            <th scope="col" class="py-3 px-3">Mode</th>
+                            <th scope="col" class="py-3 px-3 text-right">Amount (₹)</th>
+                            <th scope="col" class="py-3 px-3 text-right">Paid (₹)</th>
+                            <th scope="col" class="py-3 px-3 text-right">Balance (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="client-ledger-body">
+                        <tr class="bg-white border-b hover:bg-pink-50"><td colspan="10" class="p-4 text-center">Loading client ledger...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Firebase Imports and Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // ----------------------------------------------------------------------
+        // *** STEP 3: PASTE YOUR REAL FIREBASE CONFIG HERE ***
+       // ----------------------------------------------------------------------
+// *** STEP 3: PASTE YOUR REAL FIREBASE CONFIG HERE ***
+// After creating your Firebase project, replace the 'null' below 
+// with the EXACT config object copied from your Firebase console.
+const USER_FIREBASE_CONFIG = {
+  // NOTE: COMMAS ARE CRUCIAL FOR JAVASCRIPT SYNTAX
+  apiKey: "AIzaSyCwA7LFJgET8hnVZTST9e9Pv-EgidUuOUc",
+  authDomain: "the-initiative-industries-ldgr.firebaseapp.com",
+  projectId: "the-initiative-industries-ldgr",
+  storageBucket: "the-initiative-industries-ldgr.firebasestorage.app",
+  messagingSenderId: "242908694072",
+  appId: "1:242908694072:web:370d444f24e4208e7408cd",
+  measurementId: "G-T39WT55251"
+}; // <--- VITAL CLOSING BRACE
+// ----------------------------------------------------------------------
+        // ----------------------------------------------------------------------
+        
+        let firebaseConfig = USER_FIREBASE_CONFIG;
+        
+        // Fallback for hosting environments that inject config securely
+        if (!firebaseConfig && typeof __firebase_config !== 'undefined' && __firebase_config) {
+             try {
+                firebaseConfig = JSON.parse(__firebase_config);
+             } catch (e) {
+                console.error("Failed to parse injected firebase config:", e);
+             }
+        }
+
+        // Global Firebase instances and state
+        let app, db, auth;
+        let userId = 'loading';
+        let transactions = [];
+        let partyNames = new Set();
+        let materialQualities = new Set(); 
+        let currentView = 'initial-loading';
+        let currentParty = null; 
+
+        // Set Firebase Debug Logging
+        setLogLevel('Debug');
+
+        // --- Utility Functions ---
+
+        /**
+         * Shows a transient notification/toast message.
+         * @param {string} message The message to display.
+         * @param {string} type 'success' or 'error' for styling.
+         */
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 p-3 rounded-lg shadow-lg text-sm transition-opacity duration-300';
+
+            if (type === 'success') {
+                toast.classList.add('bg-green-500', 'text-white');
+            } else if (type === 'error') {
+                toast.classList.add('bg-red-500', 'text-white');
+            } else {
+                toast.classList.add('bg-gray-700', 'text-white');
+            }
+
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        /**
+         * Formats a number as currency (INR).
+         * @param {number} value
+         * @returns {string}
+         */
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 2,
+            }).format(value);
+        };
+
+        /**
+         * Checks the URL for a client-specific parameter and switches to client view if found.
+         */
+        function checkClientView() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const clientParty = urlParams.get('client');
+            
+            if (clientParty) {
+                const partyName = decodeURIComponent(clientParty);
+                renderClientView(partyName);
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Switches the active view/screen.
+         * @param {string} viewId The ID of the view to show ('dashboard-view', 'ledger-view', 'add-transaction-view', 'client-view').
+         */
+        window.toggleView = function(viewId, partyName = null) {
+            document.getElementById('initial-loading').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('ledger-view').classList.add('hidden');
+            document.getElementById('add-transaction-view').classList.add('hidden');
+            document.getElementById('client-view').classList.add('hidden');
+
+            document.getElementById(viewId).classList.remove('hidden');
+            currentView = viewId;
+
+            if (viewId === 'ledger-view' && partyName) {
+                currentParty = partyName;
+                renderLedger(partyName);
+            } else if (viewId === 'add-transaction-view') {
+                document.getElementById('date').value = new Date().toISOString().split('T')[0];
+                calculateAmount(); 
+                document.getElementById('transaction-form').reset();
+            } else {
+                currentParty = null;
+            }
+        };
+
+        // --- Firebase/Auth Setup ---
+
+        async function initFirebase() {
+            // Check for client view first. If URL has a client param, skip full auth.
+            if (checkClientView()) {
+                // Client view will handle its own limited data loading
+                return; 
+            }
+            
+            // Show main app only if not in client view
+            document.getElementById('initial-loading').classList.remove('hidden');
+
+            try {
+                if (!firebaseConfig) {
+                    document.getElementById('config-warning').classList.remove('hidden');
+                    toggleView('dashboard-view'); // Show dashboard anyway, but with warning
+                    return; 
+                }
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('user-id-display').textContent = `User ID: ${userId.substring(0, 8)}...`;
+                        startRealtimeListener();
+                        toggleView('dashboard-view'); // Show dashboard after successful login
+                    } else {
+                        userId = 'anonymous';
+                        document.getElementById('user-id-display').textContent = 'User ID: Anonymous';
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                showToast(`Auth/Firebase Error: ${error.message}`, 'error');
+                toggleView('dashboard-view');
+            }
+        }
+
+        /**
+         * Starts the real-time listener for the main 'transactions' collection.
+         */
+        function startRealtimeListener() {
+            if (!db || !userId) return;
+
+            const transactionsCollection = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+            const q = query(transactionsCollection);
+
+            onSnapshot(q, (snapshot) => {
+                transactions = [];
+                partyNames = new Set();
+                materialQualities = new Set(); 
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    transactions.push({ id: doc.id, ...data });
+                    partyNames.add(data.partyName);
+                    
+                    if (data.materialQuality && data.materialQuality.trim() !== 'N/A') {
+                        materialQualities.add(data.materialQuality.trim());
+                    }
+                });
+
+                transactions.sort((a, b) => {
+                    const dateA = a.date || (a.timestamp ? a.timestamp.seconds * 1000 : 0);
+                    const dateB = b.date || (b.timestamp ? b.timestamp.seconds * 1000 : 0);
+                    return dateA - dateB;
+                });
+
+                updateDashboard();
+                updateSuggestions();
+
+                if (currentParty) {
+                    renderLedger(currentParty);
+                }
+            }, (error) => {
+                console.error("Error listening to transactions:", error);
+                showToast('Failed to load real-time data.', 'error');
+            });
+        }
+        
+        // --- Transaction Form Handling (omitted for brevity, assume updated) ---
+
+        /**
+         * Renders the detailed ledger for a specific party in read-only mode (Client View).
+         * This function is triggered when a client link is opened.
+         */
+        function renderClientView(partyName) {
+            document.getElementById('client-view-title').textContent = `Client Ledger for ${partyName} (Read-Only)`;
+            
+            // Filter transactions for this specific party
+            const partyTransactions = transactions.filter(t => t.partyName === partyName);
+            const clientLedgerBodyEl = document.getElementById('client-ledger-body');
+            clientLedgerBodyEl.innerHTML = '';
+            
+            let runningBalance = 0;
+            
+            if (partyTransactions.length === 0) {
+                 clientLedgerBodyEl.innerHTML = `<tr class="bg-white border-b hover:bg-pink-50"><td colspan="10" class="p-4 text-center">No transactions found for ${partyName}.</td></tr>`;
+                 document.getElementById('client-ledger-balance').textContent = formatCurrency(0);
+            } else {
+                 partyTransactions.forEach((t, index) => {
+                    const balanceChange = t.amount - t.paid;
+
+                    // Sale: Business is owed money (Client owes us -> Positive runningBalance)
+                    // Purchase: Business owes money (We owe client -> Negative runningBalance)
+                    if (t.type === 'Sale') {
+                        runningBalance += balanceChange;
+                    } else if (t.type === 'Purchase') {
+                        runningBalance -= balanceChange;
+                    }
+
+                    const balanceClass = runningBalance >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
+
+                    const rowHtml = `
+                        <tr class="bg-white border-b hover:bg-pink-50">
+                            <td class="py-3 px-3">${index + 1}</td>
+                            <td class="py-3 px-3">${t.date}</td>
+                            <td class="py-3 px-3 font-medium ${t.type === 'Sale' ? 'text-green-500' : 'text-red-500'}">${t.type}</td>
+                            <td class="py-3 px-3">${t.materialQuality || '-'}</td>
+                            <td class="py-3 px-3">${t.netWeight.toFixed(2)}</td>
+                            <td class="py-3 px-3">${t.rate.toFixed(2)}</td>
+                            <td class="py-3 px-3">${t.modeOfPayment || '-'}</td>
+                            <td class="py-3 px-3 text-right">${formatCurrency(t.amount)}</td>
+                            <td class="py-3 px-3 text-right">${formatCurrency(t.paid)}</td>
+                            <td class="py-3 px-3 text-right ${balanceClass}">${formatCurrency(Math.abs(runningBalance))} ${runningBalance >= 0 ? '(Owed by Client)' : '(Owed to Client)'}</td>
+                        </tr>
+                    `;
+                    clientLedgerBodyEl.insertAdjacentHTML('beforeend', rowHtml);
+                });
+                
+                // Final balance at the top
+                document.getElementById('client-ledger-balance').textContent = formatCurrency(Math.abs(runningBalance));
+                document.getElementById('client-ledger-balance').classList.remove('text-gray-900', 'text-green-600', 'text-red-600');
+                document.getElementById('client-ledger-balance').classList.add(runningBalance >= 0 ? 'text-green-600' : 'text-red-600');
+            }
+
+            // Show the client view
+            document.getElementById('initial-loading').classList.add('hidden');
+            toggleView('client-view');
+        }
+
+        /**
+         * Generates and copies the secure read-only link for the current party.
+         */
+        window.shareClientLink = function() {
+            if (!currentParty) {
+                showToast("Please select a party first.", 'error');
+                return;
+            }
+
+            // Get the base URL (e.g., https://your-ledger.com)
+            const baseUrl = window.location.origin + window.location.pathname;
+            
+            // Encode the party name for safe URL sharing
+            const encodedPartyName = encodeURIComponent(currentParty);
+            
+            // Create the client-specific link
+            const shareableLink = `${baseUrl}?client=${encodedPartyName}`;
+
+            // Copy link to clipboard
+            try {
+                // Use the older execCommand for better compatibility in iframe/local environments
+                const dummy = document.createElement('textarea');
+                document.body.appendChild(dummy);
+                dummy.value = shareableLink;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+                showToast(`Read-Only Link for ${currentParty} copied! Send this to your client.`, 'success');
+            } catch (err) {
+                console.error('Failed to copy link:', err);
+                showToast('Failed to copy link. See console for URL.', 'error');
+            }
+        };
+
+        /**
+         * Clears the URL parameter and reloads the main app view.
+         */
+        window.clearClientView = function() {
+            // Remove the URL parameter and reload the page to exit read-only mode
+            window.location.href = window.location.origin + window.location.pathname;
+        };
+
+
+        // Initialize the app on load
+        window.onload = function() {
+            initFirebase();
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        };
+
+        // Renders the detailed ledger for a specific party.
+        window.renderLedger = function(partyName) { 
+            document.getElementById('ledger-title').textContent = `Ledger for ${partyName}`;
+            const ledgerBodyEl = document.getElementById('ledger-body');
+            const typeInfoEl = document.getElementById('ledger-type-info');
+            ledgerBodyEl.innerHTML = '';
+
+            const partyTransactions = transactions.filter(t => t.partyName === partyName);
+
+            if (partyTransactions.length === 0) {
+                ledgerBodyEl.innerHTML = `<tr class="bg-white border-b hover:bg-pink-50"><td colspan="10" class="p-4 text-center">No transactions found for ${partyName}.</td></tr>`;
+                document.getElementById('ledger-balance').textContent = formatCurrency(0);
+                typeInfoEl.innerHTML = '<p class="text-sm font-medium text-gray-500">Party Relationship</p><p class="text-xl font-bold text-gray-900 mt-1">Unknown</p>';
+                return;
+            }
+
+            let runningBalance = 0;
+            const isSaleParty = partyTransactions.some(t => t.type === 'Sale');
+            const isPurchaseParty = partyTransactions.some(t => t.type === 'Purchase');
+            let relationshipText;
+            if (isSaleParty && !isPurchaseParty) {
+                relationshipText = '<p class="text-sm font-medium text-gray-600">Primary Role</p><p class="text-xl font-bold text-green-600 mt-1">Customer (Sale Party)</p>';
+            } else if (isPurchaseParty && !isSaleParty) {
+                relationshipText = '<p class="text-sm font-medium text-gray-600">Primary Role</p><p class="text-xl font-bold text-red-600 mt-1">Supplier (Purchase Party)</p>';
+            } else {
+                 relationshipText = '<p class="text-sm font-medium text-gray-600">Primary Role</p><p class="text-xl font-bold text-pink-600 mt-1">Both (Vendor/Customer)</p>';
+            }
+            typeInfoEl.innerHTML = relationshipText;
+
+            partyTransactions.forEach((t, index) => {
+                const balanceChange = t.amount - t.paid;
+
+                if (t.type === 'Sale') {
+                    runningBalance += balanceChange;
+                } else if (t.type === 'Purchase') {
+                    runningBalance -= balanceChange;
+                }
+
+                const balanceClass = runningBalance >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
+
+                const rowHtml = `
+                    <tr class="bg-white border-b hover:bg-pink-50">
+                        <td class="py-3 px-3">${index + 1}</td>
+                        <td class="py-3 px-3">${t.date}</td>
+                        <td class="py-3 px-3 font-medium ${t.type === 'Sale' ? 'text-green-500' : 'text-red-500'}">${t.type}</td>
+                        <td class="py-3 px-3">${t.materialQuality || '-'}</td>
+                        <td class="py-3 px-3">${t.netWeight.toFixed(2)}</td>
+                        <td class="py-3 px-3">${t.rate.toFixed(2)}</td>
+                        <td class="py-3 px-3">${t.modeOfPayment || '-'}</td>
+                        <td class="py-3 px-3 text-right">${formatCurrency(t.amount)}</td>
+                        <td class="py-3 px-3 text-right">${formatCurrency(t.paid)}</td>
+                        <td class="py-3 px-3 text-right ${balanceClass}">${formatCurrency(Math.abs(runningBalance))} ${runningBalance >= 0 ? '(To Receive)' : '(To Pay)'}</td>
+                    </tr>
+                `;
+                ledgerBodyEl.insertAdjacentHTML('beforeend', rowHtml);
+            });
+
+            document.getElementById('ledger-balance').textContent = formatCurrency(Math.abs(runningBalance));
+            document.getElementById('ledger-balance').classList.remove('text-gray-900', 'text-green-600', 'text-red-600');
+            document.getElementById('ledger-balance').classList.add(runningBalance >= 0 ? 'text-green-600' : 'text-red-600');
+        }
+        
+        window.addTransaction = async function() { 
+            const submitBtn = document.getElementById('submit-btn');
+            const loader = document.getElementById('loader');
+            
+            if (!db) {
+                showToast('Cannot save data: Database connection failed (see warning).', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            loader.classList.remove('hidden');
+            submitBtn.textContent = 'Saving...';
+
+            try {
+                const form = document.getElementById('transaction-form');
+                const formData = new FormData(form);
+                
+                const rawQuality = formData.get('materialQuality').trim();
+                const qualityToSave = rawQuality || 'N/A';
+
+                const data = {
+                    type: formData.get('type'),
+                    partyName: formData.get('partyName').trim(),
+                    date: formData.get('date'),
+                    grossWeight: parseFloat(formData.get('grossWeight')),
+                    netWeight: parseFloat(formData.get('netWeight')),
+                    rate: parseFloat(formData.get('rate')),
+                    materialQuality: qualityToSave, 
+                    modeOfPayment: formData.get('modeOfPayment').trim() || null, 
+                    amount: parseFloat(formData.get('amount')), 
+                    paid: parseFloat(formData.get('amountPaid')),
+                    timestamp: serverTimestamp() 
+                };
+
+                const calculatedBalance = data.amount - data.paid;
+
+                if (isNaN(data.amount) || isNaN(data.paid) || data.partyName === '') {
+                    throw new Error("Invalid financial or party data. Please check inputs.");
+                }
+
+                const transactionsCollection = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+                await addDoc(transactionsCollection, data);
+
+                showToast(`Transaction added successfully! Balance: ${formatCurrency(calculatedBalance)}`);
+                form.reset();
+                calculateAmount(); 
+                toggleView('dashboard-view'); 
+
+            } catch (error) {
+                console.error("Error adding transaction:", error);
+                showToast(`Error: Could not save transaction. ${error.message}`, 'error');
+            } finally {
+                loader.classList.add('hidden');
+                submitBtn.textContent = 'Add Transaction';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Updates the datalists for party name and material quality suggestions in the form.
+        function updateSuggestions() {
+            // 1. Party Suggestions
+            const partyDatalistEl = document.getElementById('party-suggestions');
+            partyDatalistEl.innerHTML = '';
+            Array.from(partyNames).sort().forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                partyDatalistEl.appendChild(option);
+            });
+            
+            // 2. Material Quality Suggestions
+            const qualityDatalistEl = document.getElementById('quality-suggestions');
+            qualityDatalistEl.innerHTML = '';
+            // Add 10 initial dummy categories as per user request if none exist
+            if (materialQualities.size === 0) {
+                 ['A Grade', 'B Grade', 'Standard', 'Premium', 'Economy', 'Mixed Lot', 'Recycled', 'Scrap', 'Virgin', 'Rejects'].forEach(quality => {
+                    materialQualities.add(quality);
+                 });
+            }
+
+            Array.from(materialQualities).sort().forEach(quality => {
+                const option = document.createElement('option');
+                option.value = quality;
+                qualityDatalistEl.appendChild(option);
+            });
+        }
+        
+        // Updates the summary cards and party list on the dashboard.
+        function updateDashboard() {
+            let totalReceivable = 0;
+            let totalPayable = 0;
+
+            // Calculate totals
+            transactions.forEach(t => {
+                const balance = t.amount - t.paid;
+                if (t.type === 'Sale') {
+                    // Sale: Party owes me (Receivable)
+                    totalReceivable += balance;
+                } else if (t.type === 'Purchase') {
+                    // Purchase: I owe the party (Payable)
+                    totalPayable += balance;
+                }
+            });
+
+            document.getElementById('total-receivable').textContent = formatCurrency(totalReceivable);
+            document.getElementById('total-payable').textContent = formatCurrency(totalPayable);
+
+            // Render party list
+            const partiesListEl = document.getElementById('parties-list');
+            partiesListEl.innerHTML = '';
+
+            if (partyNames.size === 0) {
+                partiesListEl.innerHTML = '<div class="p-4 text-center text-gray-500">No parties found. Add a transaction to start.</div>';
+                return;
+            }
+
+            Array.from(partyNames).sort().forEach(partyName => {
+                let partyBalance = 0;
+                transactions.filter(t => t.partyName === partyName).forEach(t => {
+                    const balance = t.amount - t.paid;
+                    if (t.type === 'Sale') {
+                        partyBalance += balance; // Positive balance means money is receivable
+                    } else if (t.type === 'Purchase') {
+                        partyBalance -= balance; // Negative balance means money is payable
+                    }
+                });
+
+                const balanceClass = partyBalance > 0 ? 'text-green-600' : (partyBalance < 0 ? 'text-red-600' : 'text-gray-500');
+                const balanceLabel = partyBalance > 0 ? 'Receivable' : (partyBalance < 0 ? 'Payable' : 'Settled');
+
+                const itemHtml = `
+                    <div class="p-4 flex justify-between items-center party-list-item" onclick="toggleView('ledger-view', '${partyName.replace(/'/g, "\\'")}')">
+                        <div>
+                            <p class="text-lg font-medium text-gray-800">${partyName}</p>
+                            <p class="text-xs text-gray-600">${partyBalance >= 0 ? 'Net Receivable/Settled' : 'Net Payable'}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-semibold ${balanceClass}">${formatCurrency(Math.abs(partyBalance))}</p>
+                            <span class="text-xs font-medium ${balanceClass}">${balanceLabel}</span>
+                        </div>
+                    </div>
+                `;
+                partiesListEl.insertAdjacentHTML('beforeend', itemHtml);
+            });
+        }
+    </script>
+</body>
+</html>
